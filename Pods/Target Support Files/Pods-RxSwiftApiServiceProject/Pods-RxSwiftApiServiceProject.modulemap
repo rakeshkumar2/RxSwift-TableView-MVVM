@@ -1,0 +1,6 @@
+framework module Pods_RxSwiftApiServiceProject {
+  umbrella header "Pods-RxSwiftApiServiceProject-umbrella.h"
+
+  export *
+  module * { export * }
+}
