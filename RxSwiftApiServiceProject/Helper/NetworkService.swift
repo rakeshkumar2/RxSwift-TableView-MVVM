@@ -7,6 +7,11 @@
 
 import Foundation
 
+enum Method: String {
+    case post = "POST"
+    case get = "GET"
+}
+
 enum Result<T, E> where E: Error  {
     case success(T)
     case failure(E)
@@ -50,4 +55,59 @@ class NetworkService{
         }.resume()
     }
     
+    
+    func apiCall<T: Decodable>(urlString: String, parameters: [String:Any], method:Method, completion: @escaping (Result<T, Error>) -> ()) {
+       
+        guard let request = createRequest(urlString: urlString, parameters: parameters, method: method) else {
+            completion(.failure(Error.self as! Error))
+            return
+        }
+        
+        let configuration = URLSessionConfiguration.default;
+        let session = URLSession(configuration: configuration, delegate: nil, delegateQueue: nil)
+        
+        session.dataTask(with: request) { (data, response, err) in
+            DispatchQueue.main.async(execute: {
+                if (data != nil && err == nil) {
+                    do {
+                        let obj = try JSONDecoder().decode(T.self, from: data!)
+                        print(obj)
+                        completion(.success(obj))
+                    } catch  {
+                        completion(.failure(error))
+                    }
+                }else{
+                    completion(.failure(err!))
+                }
+
+            })
+            
+        }.resume()
+    }
+    
+    private func createRequest(urlString: String, parameters:[String:Any], method: Method) -> URLRequest?{
+        
+        let urlStr = URL(string: urlString)
+        
+        var request: URLRequest?
+        
+        if let urlStr = urlStr {
+            request = URLRequest(url: urlStr)
+        }
+        if method == .post{
+            do {
+                request?.httpBody = try JSONSerialization.data(withJSONObject: parameters, options: .prettyPrinted) // pass dictionary to nsdata object and set it as request body
+             } catch let error {
+                 print(error.localizedDescription)
+             }
+        }
+        
+
+         request?.addValue("application/json", forHTTPHeaderField: "Content-Type")
+        request?.addValue("application/json", forHTTPHeaderField: "Accept")
+        
+        request?.timeoutInterval = 20.0
+        request?.httpMethod = method.rawValue
+        return request
+    }
 }

@@ -23,7 +23,7 @@ struct ViewModel {
             
             case .success(let news):
                 print(news.articles)
-                self.articles.onNext(news.articles)
+                self.articles.onNext(news.articles ?? [])
             case .failure(let error):
                 print(error.localizedDescription)
                 self.error.onNext(error.localizedDescription)
